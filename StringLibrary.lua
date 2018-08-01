@@ -1,3 +1,7 @@
+local Resources = require(game:GetService("ReplicatedStorage"):WaitForChild("Resources"))
+local Table = Resources:LoadLibrary("Table")
+-- This requires RoStrap. Check it out on GitHub [https://github.com/RoStrap] and Roblox [https://www.roblox.com/library/725884332/RoStrap-Package-Manager].
+
 local StringLibrary = { }
 
 -- Credit to Crazyman32 for these next two functions.
@@ -17,4 +21,4 @@ function StringLibrary.ClampNumber(String, Min, Max)
 	end
 end
 
-return StringLibrary
+return Table.Lock(StringLibrary)
