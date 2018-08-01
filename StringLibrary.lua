@@ -1,6 +1,7 @@
 local Resources = require(game:GetService("ReplicatedStorage"):WaitForChild("Resources"))
 local Table = Resources:LoadLibrary("Table")
 -- This requires RoStrap. Check it out on GitHub [https://github.com/RoStrap] and Roblox [https://www.roblox.com/library/725884332/RoStrap-Package-Manager].
+-- If you don't want to use RoStrap, just remove the first two lines and replace `return Table.Lock(StringLibrary)` with `return StringLibrary`. But you should use RoStrap.
 
 local StringLibrary = { }
 
