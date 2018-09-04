@@ -2,10 +2,6 @@ local Inspect = { }
 Inspect.KEY = setmetatable({ }, { __tostring = function() return "Inspect.KEY" end })
 Inspect.METATABLE = setmetatable({ }, { __tostring = function() return "Inspect.METATABLE" end })
 
-local function PAIRS(Table)
-	return next, Table, nil
-end
-
 local MATCH = string.match
 local GSUB = string.gsub
 local CHAR = string.char
@@ -79,7 +75,7 @@ end
 local function GetNonSequentialKeys(Table)
 	local Keys, KeysLength = { }, 0
 	local SequenceLength = GetSequenceLength(Table)
-	for Key in PAIRS(Table) do
+	for Key in next, Table do
 		if not IsSequenceKey(Key, SequenceLength) then
 			KeysLength = KeysLength + 1
 			Keys[KeysLength] = Key
@@ -94,7 +90,7 @@ local function CountTableAppearances(Table, TableAppearances)
 	if type(Table) == "table" then
 		if not TableAppearances[Table] then
 			TableAppearances[Table] = 1
-			for Key, Value in PAIRS(Table) do
+			for Key, Value in next, Table do
 				CountTableAppearances(Key, TableAppearances)
 				CountTableAppearances(Value, TableAppearances)
 			end
@@ -131,7 +127,7 @@ local function ProcessRecursive(Process, Item, Path, Visited)
 		Visited[Item] = ProcessedCopy
 		local ProcessedKey
 		
-		for Key, Value in PAIRS(Processed) do
+		for Key, Value in next, Processed do
 			ProcessedKey = ProcessRecursive(Process, Key, MakePath(Path, Key, Inspect.KEY), Visited)
 			if ProcessedKey ~= nil then
 				ProcessedCopy[ProcessedKey] = ProcessRecursive(Process, Value, MakePath(Path, ProcessedKey), Visited)
