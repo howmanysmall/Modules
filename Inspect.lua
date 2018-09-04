@@ -255,7 +255,7 @@ function Inspect.Inspect(Root, Opt)
 	local Options = Opt or { }
 	local Depth = Options.Depth or 1 / 0
 	local NewLine = Options.NewLine or "\n"
-	local Indent = Options.Indent or "    "
+	local Indent = Options.Indent or "	"
 	local Process = Options.Process
 	
 	if Process then
