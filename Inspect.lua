@@ -7,8 +7,9 @@ local GSUB = string.gsub
 local CHAR = string.char
 local FORMAT = string.format
 local REP = string.rep
-
 local FLOOR = math.floor
+local SORT = table.sort
+local CONCAT = table.concat
 
 local function SmartQuote(String)
 	if MATCH(String, '"') and not MATCH(String, "'") then
@@ -81,7 +82,7 @@ local function GetNonSequentialKeys(Table)
 			Keys[KeysLength] = Key
 		end
 	end
-	table.sort(Keys, SortKeys)
+	SORT(Keys, SortKeys)
 	return Keys, KeysLength, SequenceLength
 end
 
@@ -238,7 +239,7 @@ function Inspector:PutTable(Table)
 end
 
 function Inspector:PutValue(Value)
-	local ValueType = typeof(Value)
+	local ValueType = type(Value)
 	if ValueType == "string" then
 		self:Puts(SmartQuote(Escape(Value)))
 	elseif ValueType == "number" or ValueType == "boolean" or ValueType == "nil" then
@@ -273,7 +274,7 @@ function Inspect.Inspect(Root, Opt)
 	}, InspectorMeta)
 	
 	inspector:PutValue(Root)
-	return table.concat(inspector.Buffer)
+	return CONCAT(inspector.Buffer)
 end
 
 setmetatable(Inspect, {
