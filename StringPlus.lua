@@ -75,6 +75,7 @@ StringPlus.KebabCase = Typer.AssignSignature(Typer.String, function(String)
 end)
 
 StringPlus.SnakeCase = Typer.AssignSignature(Typer.String, function(String)
+	return String:lower():gsub("[ -]", "_")
 end)
 
 -- Thanks Niles! 👍
