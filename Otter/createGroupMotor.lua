@@ -12,7 +12,7 @@ local function createGroupMotor(initialValues)
 
 	local states = { }
 
-	for key, value in pairs(initialValues) do
+	for key, value in next, initialValues do
 		states[key] = {
 			value = value,
 			complete = true
@@ -52,7 +52,7 @@ function GroupMotor.prototype:step(dt)
 	local allComplete = true
 	local values = { }
 
-	for key, state in pairs(self.__states) do
+	for key, state in next, self.__states do
 		if not state.complete then
 			local goal = self.__goals[key]
 
@@ -90,10 +90,10 @@ function GroupMotor.prototype:setGoal(goals)
 
 	self.__goals = assign({ }, self.__goals, goals)
 
-	for key in pairs(goals) do
+	for key in next, goals do
 		local state = self.__states[key]
 
-		if state == nil then
+		if not state then
 			error(("Cannot set goal for the value %s because it doesn't exist"):format(tostring(key)), 2)
 		end
 
