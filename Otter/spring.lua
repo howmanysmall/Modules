@@ -7,10 +7,24 @@
 
 local assign = require(script.Parent.assign)
 
+local error, format = error, string.format
+
 local pi = math.pi
 local exp = math.exp
 local sin = math.sin
 local cos = math.cos
+
+local function assert(Condition, ...)
+	if not Condition then
+		if select("#", ...) > 0 then
+			local Success, Result = pcall(format, ...)
+			if Success then
+				error("Assertion failed! " .. Result, 2)
+			end
+		end
+		error("Assertion failed!", 2)
+	end
+end
 
 local RESTING_VELOCITY_LIMIT = 1e-3
 local RESTING_POSITION_LIMIT = 1e-2
@@ -121,10 +135,7 @@ local function spring(goalPosition, inputOptions)
 		frequency = 1
 	}
 
-	if inputOptions ~= nil then
-		assert(type(inputOptions) == "table")
-		assign(options, inputOptions)
-	end
+	if inputOptions and type(inputOptions) == "table" then assign(options, inputOptions) end
 
 	local dampingRatio = options.dampingRatio
 	local frequency = options.frequency
@@ -136,7 +147,7 @@ local function spring(goalPosition, inputOptions)
 
 	local self = {
 		__dampingRatio = dampingRatio,
-		__frequency = frequency, -- Hz
+		__frequency = frequency,
 		__goalPosition = goalPosition,
 		step = step
 	}
