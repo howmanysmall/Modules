@@ -8,7 +8,7 @@
 local assign = require(script.Parent.assign)
 
 local pi = math.pi
-local e = 2.718281828459
+local exp = math.exp
 local sin = math.sin
 local cos = math.cos
 
@@ -34,7 +34,7 @@ local function step(self, state, dt)
 	local v0 = state.velocity or 0
 
 	local offset = p0 - g
-	local decay = e ^ (-dt * d * f)
+	local decay = exp(-dt * d * f)
 
 	local p1, v1
 
@@ -63,36 +63,36 @@ local function step(self, state, dt)
 		if c > 1e-4 then
 			z = j / c
 		else
-			local a = dt*f
-			z = a + ((a*a)*(c*c)*(c*c)/20 - c*c)*(a*a*a)/6
+			local a = dt * f
+			z = a + ((a * a) * (c * c) * (c * c) / 20 - c * c) * (a * a * a) / 6
 		end
 
 		-- Repeat the process with a->dt and c->b=f*c for the f->0 case
 		local y
-		if f*c > 1e-4 then
-			y = j/(f*c)
+		if f * c > 1e-4 then
+			y = j / (f * c)
 		else
-			local b = f*c
-			y = dt + ((dt*dt)*(b*b)*(b*b)/20 - b*b)*(dt*dt*dt)/6
+			local b = f * c
+			y = dt + ((dt * dt) * (b * b) * (b * b) / 20 - b * b) * (dt * dt * dt) / 6
 		end
 
-		p1 = (offset*(i + d*z) + v0*y)*decay + g
-		v1 = (v0*(i - z*d) - offset*(z*f))*decay
+		p1 = (offset * (i + d * z) + v0 * y) * decay + g
+		v1 = (v0 * (i - z * d) - offset * (z * f)) * decay
 
 	else -- Overdamped
-		local c = (d*d - 1) ^ 0.5
+		local c = (d * d - 1) ^ 0.5
 
-		local r1 = -f*(d - c)
-		local r2 = -f*(d + c)
+		local r1 = -f * (d - c)
+		local r2 = -f * (d + c)
 
-		local co2 = (v0 - r1*offset)/(2*f*c)
+		local co2 = (v0 - r1 * offset) / (2 * f * c)
 		local co1 = offset - co2
 
-		local e1 = co1 * e ^ (r1*dt)
-		local e2 = co2 * e ^ (r2*dt)
+		local e1 = co1 * exp(r1 * dt)
+		local e2 = co2 * exp(r2 * dt)
 
 		p1 = e1 + e2 + g
-		v1 = r1*e1 + r2 * e2
+		v1 = r1 * e1 + r2 * e2
 	end
 
 	local positionOffset = p1 - self.__goalPosition
