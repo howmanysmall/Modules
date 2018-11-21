@@ -1,7 +1,7 @@
 local function addToMap(map, addKey, addValue)
 	local new = { }
 
-	for key, value in pairs(map) do
+	for key, value in next, map do
 		new[key] = value
 	end
 
@@ -13,7 +13,7 @@ end
 local function removeFromMap(map, removeKey)
 	local new = { }
 
-	for key, value in pairs(map) do
+	for key, value in next, map do
 		if key ~= removeKey then
 			new[key] = value
 		end
@@ -43,7 +43,7 @@ local function createSignal()
 	end
 
 	local function fire(self, ...)
-		for callback, connection in pairs(connections) do
+		for callback, connection in next, connections do
 			if not connection.disconnected then
 				callback(...)
 			end
