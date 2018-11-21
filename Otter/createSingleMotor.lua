@@ -39,25 +39,12 @@ end
 function SingleMotor.prototype:step(dt)
 	assert(type(dt) == "number")
 
-	if self.__state.complete then
-		return
-	end
-
-	if self.__goal == nil then
-		return
-	end
-
+	if self.__state.complete then return end
+	if not self.__goal then return end
 	local newState = self.__goal:step(self.__state, dt)
-
-	if newState ~= nil then
-		self.__state = newState
-	end
-
+	if newState ~= nil then self.__state = newState end
 	self.__onStep:fire(self.__state.value)
-
-	if self.__state.complete then
-		self.__onComplete:fire(self.__state.value)
-	end
+	if self.__state.complete then self.__onComplete:fire(self.__state.value) end
 end
 
 function SingleMotor.prototype:setGoal(goal)
