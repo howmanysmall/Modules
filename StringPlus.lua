@@ -26,7 +26,6 @@ StringPlus.Random2 = Typer.AssignSignature(Typer.PositiveInteger, function(Lengt
 	return String
 end)
 
-
 StringPlus.Split = Typer.AssignSignature(Typer.String, Typer.OptionalString, function(String, Delimiter)
 	local Delimiter, Fields = Delimiter or ":", { }
 	local Pattern = ("([^%s]+)"):format(Delimiter)
