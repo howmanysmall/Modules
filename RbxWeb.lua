@@ -1,13 +1,24 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Resources = require(ReplicatedStorage:WaitForChild("Resources"))
-local DataStoreService = Resources:LoadLibrary("DataStoreService")
-local Debug = Resources:LoadLibrary("Debug")
-local Typer = Resources:LoadLibrary("Typer")
+local error = error
+local _warn = warn
+local format = string.format
+
+local function FastAssert(Condition, ...)
+	if not Condition then
+		if select("#", ...) > 0 then
+			local Success, Result = pcall(format, ...)
+			if Success then
+				error("[FastAssert] Assertion failed: " .. Result, 2)
+			end
+		end
+		error("[FastAssert] Assertion failed.", 2)
+	end
+end
 
 local RbxWeb = { }
 
+local DATA_STORE = nil
 local DATA_STORES = { }
 local YIELD = false
 local STANDARD_WAIT = 0.5
@@ -33,90 +44,100 @@ local function PushGenericQueue(Callback, Yielder)
 	end
 end
 
-RbxWeb.AddGeneric = Typer.AssignSignature(2, Typer.String, Typer.String, Typer.OptionalString, function(self, Key, Scope, Prefix)
+function RbxWeb.new(DataModel)
+	FastAssert(DATA_STORE == nil, "DATA_STORE isn't nil, it is currently set to %q (%s).", tostring(DATA_STORE), typeof(DATA_STORE))
+	DATA_STORE = DataModel:GetService("DataStoreService")
+end
+
+function RbxWeb:Initialize(DataModel)
+	FastAssert(DATA_STORE == nil, "DATA_STORE isn't nil, it is currently set to %q (%s).", tostring(DATA_STORE), typeof(DATA_STORE))
+	DATA_STORE = DataModel:GetService("DataStoreService")
+end
+
+function RbxWeb:AddGeneric(Key, Scope, Prefix)
 	local KeyPrefix = Prefix or ""
-	local DataStore = DataStoreService:GetDataStore(Key, Scope)
+	local DataStore = DATA_STORE:GetDataStore(Key, Scope)
 	DATA_STORES[DataStore] = KeyPrefix
 	return DataStore
-end)
+end
 
-RbxWeb.AddOrdered = Typer.AssignSignature(2, Typer.String, Typer.String, Typer.OptionalString, function(self, Key, Scope, Prefix)
+function RbxWeb:AddOrdered(Key, Scope, Prefix)
 	local KeyPrefix = Prefix or ""
-	local DataStore = DataStoreService:GetOrderedDataStore(Key, Scope)
+	local DataStore = DATA_STORE:GetOrderedDataStore(Key, Scope)
 	DATA_STORES[DataStore] = KeyPrefix
 	return DataStore
-end)
+end
 
-RbxWeb.GetGeneric = Typer.AssignSignature(2, Typer.InstanceWhichIsAGlobalDataStore, function(self, DataRoot)
+function RbxWeb:GetGeneric(DataRoot)
 	return setmetatable({
-		GetKey = Typer.AssignSignature(2, Typer.PositiveInteger, function(self, Data)
+		GetKey = function(self, Data)
 			return self.Prefix .. Data
-		end),
+		end,
 		
-		GetAsync = Typer.AssignSignature(2, Typer.String, function(self, Key)
+		GetAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.GetAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in GetAsync for GlobalDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in GetAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		NewAsync = Typer.AssignSignature(2, Typer.String, Typer.Any, function(self, Key, Value)
+		NewAsync = function(self, Key, Value)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.SetAsync, DataRoot, Key, Value)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in NewAsync for GlobalDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in NewAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		SaveAsync = Typer.AssignSignature(2, Typer.String, Typer.Function, function(self, Key, Callback)
+		SaveAsync = function(self, Key, Callback)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.UpdateAsync, DataRoot, Key, Callback)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in SaveAsync for GlobalDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in SaveAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		DeleteAsync = Typer.AssignSignature(2, Typer.String, function(self, Key)
+		DeleteAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.RemoveAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in DeleteAsync for GlobalDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in DeleteAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		IncrementAsync = Typer.AssignSignature(2, Typer.String, Typer.Integer, function(self, Key, Delta)
+		IncrementAsync = function(self, Key, Delta)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.IncrementAsync, DataRoot, Key, Delta)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in IncrementAsync for GlobalDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in IncrementAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end)
+		end
 	}, {
 		__index = function(_, Key)
 			return ({ Prefix = DATA_STORES[DataRoot] })[Key]
 		end
 	})
-end)
+end
 
-RbxWeb.GetOrdered = Typer.AssignSignature(2, Typer.InstanceWhichIsAOrderedDataStore, function(self, DataRoot)
+function RbxWeb:GetOrdered(DataRoot)
 	return setmetatable({
-		CollectData = Typer.AssignSignaure(2, Typer.OptionalBoolean, function(self, Ascend)
+		CollectData = function(self, Ascend)
 			local DataTable = { }
 			local IsAscending = Ascend or false
 			local Success, Data = PushGenericQueue(function()
@@ -124,7 +145,7 @@ RbxWeb.GetOrdered = Typer.AssignSignature(2, Typer.InstanceWhichIsAOrderedDataSt
 			end, GetSortYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in CollectData for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in CollectData for OrderedDataStore %q:\n%s", DataRoot, Data))
 				return Success, Data
 			else
 				while true do
@@ -133,84 +154,84 @@ RbxWeb.GetOrdered = Typer.AssignSignature(2, Typer.InstanceWhichIsAOrderedDataSt
 						for Index, Value in next, PageData do DataTable[Value.key] = Value.value end
 						if Data.IsFinished then break end
 					else
-						Debug.Warn("Error in GetCurrentPage for OrderedDataStore %q:\n%s", DataRoot, PageData)
+						warn(format("Error in GetCurrentPage for OrderedDataStore %q:\n%s", DataRoot, PageData))
 						return PageSuccess, PageData
 					end
 					
 					local NextPageSuccess, NextPageData = pcall(Data.AdvanceToNextPageAsync, Data)
 					if not NextPageSuccess then
-						Debug.Warn("Error in AdvanceToNextPageAsync for OrderedDataStore %q:\n%s", DataRoot, NextPageData)
+						warn(format("Error in AdvanceToNextPageAsync for OrderedDataStore %q:\n%s", DataRoot, NextPageData))
 						return NextPageSuccess, NextPageData
 					end
 				end
 			end
 			
 			return Success, DataTable
-		end),
+		end,
 		
-		GetKey = Typer.AssignSignature(2, Typer.PositiveInteger, function(self, Data)
+		GetKey = function(self, Data)
 			return self.Prefix .. Data
-		end),
+		end,
 		
-		GetAsync = Typer.AssignSignature(2, Typer.String, function(self, Key)
+		GetAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.GetAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in GetAsync for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in GetAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		NewAsync = Typer.AssignSignature(2, Typer.String, Typer.Any, function(self, Key, Value)
+		NewAsync = function(self, Key, Value)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.SetAsync, DataRoot, Key, Value)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in NewAsync for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in NewAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		SaveAsync = Typer.AssignSignature(2, Typer.String, Typer.Function, function(self, Key, Callback)
+		SaveAsync = function(self, Key, Callback)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.UpdateAsync, DataRoot, Key, Callback)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in SaveAsync for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in SaveAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		DeleteAsync = Typer.AssignSignature(2, Typer.String, function(self, Key)
+		DeleteAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.RemoveAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in DeleteAsync for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in DeleteAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end),
+		end,
 		
-		IncrementAsync = Typer.AssignSignature(2, Typer.String, Typer.Integer, function(self, Key, Delta)
+		IncrementAsync = function(self, Key, Delta)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.IncrementAsync, DataRoot, Key, Delta)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				Debug.Warn("Error in IncrementAsync for OrderedDataStore %q:\n%s", DataRoot, Data)
+				warn(format("Error in IncrementAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
 			end
 			return Success, Data
-		end)
+		end
 	}, {
 		__index = function(_, Key)
 			return ({ Prefix = DATA_STORES[DataRoot] })[Key]
 		end
 	})
-end)
+end
 
-return Resources:LoadLibrary("Table").Lock(RbxWeb)
+return RbxWeb
