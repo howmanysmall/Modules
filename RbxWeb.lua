@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 
 local error = error
-local _warn = warn
 local format = string.format
 
 local function FastAssert(Condition, ...)
