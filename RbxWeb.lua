@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 
-local error = error
 local format = string.format
 
 local function FastAssert(Condition, ...)
@@ -19,7 +18,7 @@ local RbxWeb = { }
 
 local DATA_STORE = nil
 local DATA_STORES = { }
-local YIELD = false
+local Yield = false
 local STANDARD_WAIT = 0.5
 
 local function GetGenericYieldTime()
@@ -31,11 +30,11 @@ local function GetSortYieldTime()
 end
 
 local function PushGenericQueue(Callback, Yielder)
-	if not YIELD then
-		YIELD = true
+	if not Yield then
+		Yield = true
 		local Data = { Callback() }
 		wait(Yielder())
-		YIELD = false
+		Yield = false
 		return unpack(Data)
 	else
 		wait(STANDARD_WAIT)
@@ -79,40 +78,40 @@ function RbxWeb:GetGeneric(DataRoot)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in GetAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in GetAsync for GlobalDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		NewAsync = function(self, Key, Value)
+		SetAsync = function(self, Key, Value)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.SetAsync, DataRoot, Key, Value)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in NewAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in SetAsync for GlobalDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		SaveAsync = function(self, Key, Callback)
+		UpdateAsync = function(self, Key, Callback)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.UpdateAsync, DataRoot, Key, Callback)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in SaveAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in UpdateAsync for GlobalDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		DeleteAsync = function(self, Key)
+		RemoveAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.RemoveAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in DeleteAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in RemoveAsync for GlobalDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
@@ -123,7 +122,7 @@ function RbxWeb:GetGeneric(DataRoot)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in IncrementAsync for GlobalDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in IncrementAsync for GlobalDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end
@@ -144,7 +143,7 @@ function RbxWeb:GetOrdered(DataRoot)
 			end, GetSortYieldTime)
 			
 			if not Success then
-				warn(format("Error in CollectData for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in CollectData for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 				return Success, Data
 			else
 				while true do
@@ -153,13 +152,13 @@ function RbxWeb:GetOrdered(DataRoot)
 						for Index, Value in next, PageData do DataTable[Value.key] = Value.value end
 						if Data.IsFinished then break end
 					else
-						warn(format("Error in GetCurrentPage for OrderedDataStore %q:\n%s", DataRoot, PageData))
+						warn(format("Error in GetCurrentPage for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(PageData)))
 						return PageSuccess, PageData
 					end
 					
 					local NextPageSuccess, NextPageData = pcall(Data.AdvanceToNextPageAsync, Data)
 					if not NextPageSuccess then
-						warn(format("Error in AdvanceToNextPageAsync for OrderedDataStore %q:\n%s", DataRoot, NextPageData))
+						warn(format("Error in AdvanceToNextPageAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(NextPageData)))
 						return NextPageSuccess, NextPageData
 					end
 				end
@@ -178,40 +177,40 @@ function RbxWeb:GetOrdered(DataRoot)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in GetAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in GetAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		NewAsync = function(self, Key, Value)
+		SetAsync = function(self, Key, Value)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.SetAsync, DataRoot, Key, Value)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in NewAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in SetAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		SaveAsync = function(self, Key, Callback)
+		UpdateAsync = function(self, Key, Callback)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.UpdateAsync, DataRoot, Key, Callback)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in SaveAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in UpdateAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
 		
-		DeleteAsync = function(self, Key)
+		RemoveAsync = function(self, Key)
 			local Success, Data = PushGenericQueue(function()
 				return pcall(DataRoot.RemoveAsync, DataRoot, Key)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in DeleteAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in RemoveAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end,
@@ -222,7 +221,7 @@ function RbxWeb:GetOrdered(DataRoot)
 			end, GetGenericYieldTime)
 			
 			if not Success then
-				warn(format("Error in IncrementAsync for OrderedDataStore %q:\n%s", DataRoot, Data))
+				warn(format("Error in IncrementAsync for OrderedDataStore %q:\n%s", tostring(DataRoot), tostring(Data)))
 			end
 			return Success, Data
 		end
