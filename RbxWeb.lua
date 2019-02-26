@@ -1,6 +1,41 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local format = string.format
+local Resources, Table do
+	local ResourcesExists = ReplicatedStorage:FindFirstChild("Resources")
+	if ResourcesExists then
+		Resources = require(ReplicatedStorage.Resources)
+		Table = Resources:LoadLibrary("Table")
+	else
+		Resources = nil
+		Table = {
+			Lock = function(Tab, __call)
+				local ModuleName = getfenv(2).script.Name
+				local Userdata = newproxy(true)
+				local Metatable = getmetatable(Userdata)
+			
+				function Metatable:__index(Index)
+					local Value = Tab[Index]
+					return Value == nil and error(format("!%q does not exist in read-only table", ModuleName, Index)) or Value
+				end
+			
+				function Metatable:__newindex(Index, Value)
+					error(format("!Cannot write %s to index [%q] of read-only table", ModuleName, Value, Index))
+				end
+			
+				function Metatable:__tostring()
+					return ModuleName
+				end
+			
+				Metatable.__call = __call
+				Metatable.__metatable = "[" .. ModuleName .. "] Requested metatable of read-only table is locked"
+			
+				return Userdata
+			end
+		}
+	end
+end
 
 local function FastAssert(Condition, ...)
 	if not Condition then
@@ -42,14 +77,13 @@ local function PushGenericQueue(Callback, Yielder)
 	end
 end
 
-function RbxWeb.new(DataModel)
-	FastAssert(DATA_STORE == nil, "DATA_STORE isn't nil, it is currently set to %q (%s).", tostring(DATA_STORE), typeof(DATA_STORE))
-	DATA_STORE = DataModel:GetService("DataStoreService")
-end
-
 function RbxWeb:Initialize(DataModel)
 	FastAssert(DATA_STORE == nil, "DATA_STORE isn't nil, it is currently set to %q (%s).", tostring(DATA_STORE), typeof(DATA_STORE))
-	DATA_STORE = DataModel:GetService("DataStoreService")
+	if typeof(DataModel) == "Instance" then
+		DATA_STORE = DataModel:GetService("DataStoreService")
+	elseif type(DataModel) == "table" then
+		DATA_STORE = DataModel:LoadLibrary("DataStoreService")
+	end
 end
 
 function RbxWeb:AddGeneric(Key, Scope, Prefix)
@@ -232,4 +266,4 @@ function RbxWeb:GetOrdered(DataRoot)
 	})
 end
 
-return RbxWeb
+return Table.Lock(RbxWeb)
