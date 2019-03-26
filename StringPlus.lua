@@ -5,30 +5,33 @@ local Typer = Resources:LoadLibrary("Typer")
 
 local StringPlus = { }
 
-local RandomLib = Random.new(tick() % 1 * 1E7)
+local random = math.random
+math.randomseed(tick() % 1 * 1E7)
+
+local CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 StringPlus.Random = Typer.AssignSignature(Typer.PositiveInteger, function(Length)
 	local String = ""
 	for Index = 1, Length do
-		local Character = RandomLib:NextInteger(65, 90):char()
+		local Character = random(65, 90):char()
 		String = String .. Character
 	end
 	return String
 end)
 
 StringPlus.Random2 = Typer.AssignSignature(Typer.PositiveInteger, function(Length)
-	local Characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	local String = ""
 	for Index = Length, 0, -1 do
-		local Character = math.floor(RandomLib:NextNumber() * #Characters)
-		String = String .. Characters:sub(Character, Character)
+		local Character = random() * 62 Character = Character - Character % 1
+		String = String .. CHARACTERS:sub(Character, Character)
 	end
 	return String
 end)
 
 StringPlus.Split = Typer.AssignSignature(Typer.String, Typer.OptionalString, function(String, Delimiter)
 	local Delimiter, Fields = Delimiter or ":", { }
-	local Pattern = ("([^%s]+)"):format(Delimiter)
+	local Pattern = "([^" .. Delimiter .. "]+)")
+--	local Pattern = ("([^%s]+)"):format(Delimiter)
 	String:gsub(Pattern, function(Value) Fields[#Fields + 1] = Value end)
 	return Fields
 end)
@@ -52,12 +55,14 @@ end)
 
 StringPlus.StartsWith = Typer.AssignSignature(Typer.String, Typer.String, Typer.OptionalBoolean, function(String, StartsWith, IgnoreCase)
 	IgnoreCase = IgnoreCase or false
-	return IgnoreCase and String:lower():sub(1, #StartsWith) == StartsWith:lower() or String:sub(1, #StartsWith) == StartsWith
+	local Starting = String:sub(1, #StartsWith)
+	return IgnoreCase and Starting:lower() == StartsWith:lower() or Starting == StartsWith
 end)
 
 StringPlus.EndsWith = Typer.AssignSignature(Typer.String, Typer.String, Typer.OptionalBoolean, function(String, EndsWith, IgnoreCase)
 	IgnoreCase = IgnoreCase or false
-	return IgnoreCase and String:lower():sub(-#EndsWith) == EndsWith:lower() or String:sub(-#EndsWith) == EndsWith
+	local Ending = String:sub(-#EndsWith)
+	return IgnoreCase and Ending:lower() == EndsWith:lower() or Ending == EndsWith
 end)
 
 StringPlus.CamelCase = Typer.AssignSignature(Typer.String, function(String)
@@ -96,7 +101,18 @@ local isUpper, isLower do
 	end
 end
 
--- WIP
+StringPlus.SwapCase = Typer.AssignSignature(Typer.String, function(String)
+	local SwapString = ""
+	for Character in String:gmatch("%S") do
+		if Character == Character:upper() then
+			SwapString = SwapString .. Character:lower()
+		elseif Character == Character:lower() then
+			SwapString = SwapString .. Character:upper()
+		end
+	end
+	return SwapString
+end)
+--[[
 StringPlus.SwapCase = Typer.AssignSignature(Typer.String, function(String)
 	local BackupString = String
 	local NewString = ""
@@ -105,12 +121,13 @@ StringPlus.SwapCase = Typer.AssignSignature(Typer.String, function(String)
 		if isLower(Character) then NewString = NewString .. Character:upper() end
 	end
 	return NewString
-end)
+end)]]
 
 StringPlus.TitleCase = Typer.AssignSignature(Typer.String, Typer.OptionalBoolean, function(String, NoSplit)
 end)
 
 StringPlus.Slugify = Typer.AssignSignature(Typer.String, function(String)
+	return String:gsub("%s+", "-")
 end)
 
 return Table.Lock(StringPlus)
